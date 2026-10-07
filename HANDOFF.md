@@ -1,9 +1,9 @@
 # Precinct Tool — Project Handoff & Status
 
-_Last updated: 2026-10-06. This is the single source of truth for where the
+_Last updated: 2026-10-07. This is the single source of truth for where the
 project stands, how it works, and what's left. Read this first._
 
-## 0. 2026-10-06 — UCC lean rebuild (branch `ucc-lean`)
+## 0. 2026-10-06 — UCC lean rebuild (now repo `CatAuditor/UCC-lookup`)
 
 Scope cut to what the Utah Civic Compact needs: **Utah House, Utah Senate,
 county commission/council, city/town mayor + council** — candidates and
@@ -21,10 +21,10 @@ they disagree with this section.
   (`lib/geo.js`). Submissions are written **by header name**; House, Senate,
   County and City columns are added automatically if missing.
 - **Map key:** collapsible; starts collapsed in the bottom-left on phones.
-- **Bug fixed:** server-side geocoding (`/api/precinct`) was failing in prod —
-  the UGRC key only allows referrer `precinctlookuptool.vercel.app`, but the
-  code defaulted to the Utah Dem site. Default changed; `UGRC_REFERER` env var
-  still overrides.
+- **Geocoding is server-side:** the page calls `/api/geocode`, which calls
+  UGRC with `UGRC_API_KEY` and sends `UGRC_REFERER` (must match the key's
+  allowed-referrer pattern, currently `precinctlookuptool.vercel.app`). The key
+  is no longer embedded in the page, and the app works on any domain.
 - **Data:** `scripts/build_sheet.py` builds the whole Candidates tab:
   legislature from `le.utah.gov` + the LG filing xlsx (190 certified Nov 2026
   House/Senate candidates), plus `data/county_officials.csv` and
@@ -291,15 +291,18 @@ Address | HelpElect | Newsletter | Status | DateContacted | SourceURL`
 
 ## 9. Setup / deploy checklist (fresh)
 
-> **Current deployment (2026-07-01):** live on Vercel project `precinctlookuptool`
-> (owner `cradcli4-7333`). Prod alias:
-> `https://precinctlookuptool-cradcli4-7333s-projects.vercel.app`. GitHub repo
-> `CatAuditor/precinctlookuptool` is connected for auto-deploys on push to `main`.
-> All required env vars are set (prod/preview/dev); Deployment Protection is off.
-> Candidate sheet = file titled **"Candidates/incumbent"** (`1Wmi-xpg…Pu2U`,
-> `Candidates` tab); volunteer sheet = file titled **"Volunteer"**
-> (`1X5eHi4K…KWEs8`, `Config` + `Submissions` tabs). Both shared to the SA. The
-> steps below are the generic recipe for standing up a **new** client from scratch.
+> **Current deployment (2026-10-07):** GitHub `CatAuditor/UCC-lookup` (`main`
+> auto-deploys) → Vercel project **`ucc-lookup`** (owner `cradcli4-7333`),
+> production URL **https://ucc-lookup.vercel.app**. Env vars set in Vercel
+> (production + development): `UGRC_API_KEY`, `UGRC_REFERER`,
+> `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_KEY`,
+> `CANDIDATE_SHEET_ID`, `VOLUNTEER_SHEET_ID`. The service account
+> (`precinct-lookup@precinct-lookup-501120.iam.gserviceaccount.com`) cannot
+> create sheets itself (403 — no Drive storage), so a person creates a blank
+> sheet, shares it with that email as **Editor**, and the tabs/data are
+> loaded with `scripts/push_candidates.js`. The old `precinctlookuptool`
+> project / repo is the July version and is superseded. The steps below are the
+> generic recipe for standing up a **new** client from scratch.
 
 1. **Rotate the service-account key** (the earlier one was pasted into a chat).
    Google Cloud → Credentials → the service account → Keys → delete old →
