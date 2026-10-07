@@ -1,0 +1,5 @@
+Name,Office,DistrictType,District,Party,Incumbent,Status,PhotoURL,Bio,Website,OfficialURL,Email,Phone,Facebook,Instagram,X,VolunteerURL,DonateURL,TopIssues,Active,Order
+Bob Lee,Utah Senate District 5,senate,5,Republican,TRUE,GENERAL,,,https://boblee.example,https://senate.utah.gov/sen/BOBLEE/,blee@le.utah.gov,,,,,,,,TRUE,1
+Jane Smith,Utah House District 10,house,10,Democratic,FALSE,GENERAL,,,https://janesmith.example,,jane@example.com,,,,,,,,TRUE,2
+Pat Doe,County Commission Seat A,county,Cache,Republican,TRUE,INCUMBENT — not on 2026 ballot,,,,https://www.cachecounty.gov/,pdoe@cachecounty.gov,,,,,,,,TRUE,1
+Sam Roe,City Council District 3,city,Salt Lake City,,TRUE,INCUMBENT — not on 2026 ballot,,,,https://www.slc.gov/council/,sam.roe@slc.gov,,,,,,,,TRUE,3

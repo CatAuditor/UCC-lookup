@@ -1,0 +1,19 @@
+# Secrets / local env (keep the tracked template)
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Vercel
+.vercel
+
+# OS / editor cruft
+.DS_Store
+
+# Claude Code local settings
+.claude/
+
+# Private business material
+pitch/

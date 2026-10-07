@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>API Reference – Utah Civic Compact Precinct Lookup</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1a2744;
+      line-height: 1.6;
+    }
+
+    header {
+      background: #003594;
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header .star { font-size: 2rem; }
+    header h1   { font-size: 1.2rem; font-weight: 700; }
+    header p    { font-size: .82rem; opacity: .8; margin-top: 2px; }
+    header nav  { margin-left: auto; display: flex; gap: 20px; }
+    header nav a { color: rgba(255,255,255,.85); text-decoration: none; font-size: .9rem; }
+    header nav a:hover { color: #fff; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #003594;
+      margin: 40px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #d0daf0;
+    }
+    h3 { font-size: 1rem; font-weight: 700; margin: 24px 0 8px; color: #1a2744; }
+    p  { margin-bottom: 12px; color: #334060; }
+
+    /* endpoint pill */
+    .endpoint {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border: 2px solid #003594;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin: 8px 0 20px;
+      font-family: monospace;
+      font-size: .95rem;
+      word-break: break-all;
+    }
+    .method {
+      background: #003594;
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+    }
+
+    /* params table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      margin-bottom: 24px;
+    }
+    th {
+      background: #003594;
+      color: #fff;
+      text-align: left;
+      padding: 10px 14px;
+      font-size: .82rem;
+      letter-spacing: .04em;
+    }
+    td {
+      padding: 10px 14px;
+      font-size: .88rem;
+      border-bottom: 1px solid #e8edf5;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #f7f9fc; }
+    code {
+      font-family: monospace;
+      background: #e8edf5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: .88em;
+    }
+    .required { color: #b00020; font-weight: 700; font-size: .75rem; }
+    .optional { color: #607090; font-size: .75rem; }
+
+    /* code blocks */
+    pre {
+      background: #1a2744;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: .85rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    pre .key   { color: #90cdf4; }
+    pre .str   { color: #9ae6b4; }
+    pre .num   { color: #fbd38d; }
+    pre .bool  { color: #fc8181; }
+    pre .dim   { color: #718096; }
+    pre .url   { color: #76e4f7; }
+
+    /* note boxes */
+    .note {
+      background: #e8f0fe;
+      border-left: 4px solid #003594;
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 20px;
+      font-size: .88rem;
+    }
+    .note.warn {
+      background: #fff8e1;
+      border-left-color: #f59e0b;
+    }
+
+    /* llm section */
+    .llm-box {
+      background: #fff;
+      border: 2px dashed #4a90e2;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-top: 8px;
+    }
+    .llm-box h3 { margin-top: 0; color: #003594; }
+
+    footer {
+      background: #003594;
+      color: rgba(255,255,255,.7);
+      text-align: center;
+      font-size: .75rem;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="star">★</div>
+  <div>
+    <h1>Utah Civic Compact – Precinct Lookup</h1>
+    <p>API Reference</p>
+  </div>
+  <nav>
+    <a href="/">← Map</a>
+    <a href="/docs.html">API Docs</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <h2>Overview</h2>
+  <p>
+    The Utah Civic Compact Precinct Lookup API resolves a Utah mailing address into its corresponding
+    voting precinct. It returns the precinct name, identifier, county, geocoded coordinates,
+    GeoJSON boundary geometry, and a self-contained renderable HTML map — all in a single request.
+  </p>
+  <p>
+    The API is open, requires no authentication from callers, and supports CORS so it can be called
+    from any browser, server, or automated agent.
+  </p>
+
+  <h2>Endpoint</h2>
+
+  <div class="endpoint">
+    <span class="method">GET</span>
+    <span>/api/precinct</span>
+  </div>
+
+  <h3>Base URL</h3>
+  <pre><span class="url">https://utahdemprecinctmap.vercel.app/api/precinct</span></pre>
+
+  <h2>Parameters</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Parameter</th>
+        <th>Type</th>
+        <th>Required</th>
+        <th>Description</th>
+        <th>Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>address</code></td>
+        <td>string</td>
+        <td><span class="required">Required</span></td>
+        <td>
+          Utah street address. Accepts city name or ZIP code as zone.
+          Abbreviations (St, Ave, N, S, SLC, etc.) are handled automatically.
+        </td>
+        <td><code>350 N State St, Salt Lake City</code></td>
+      </tr>
+      <tr>
+        <td><code>geometry</code></td>
+        <td>boolean</td>
+        <td><span class="optional">Optional</span></td>
+        <td>Include GeoJSON polygon geometry in response. Default: <code>true</code></td>
+        <td><code>geometry=false</code></td>
+      </tr>
+      <tr>
+        <td><code>html</code></td>
+        <td>boolean</td>
+        <td><span class="optional">Optional</span></td>
+        <td>
+          Include a self-contained renderable HTML map in the response.
+          Can be embedded directly in an <code>&lt;iframe&gt;</code> or served as a standalone page.
+          Default: <code>true</code>
+        </td>
+        <td><code>html=false</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Example Request</h2>
+  <pre>GET /api/precinct?address=350+N+State+St,+Salt+Lake+City</pre>
+
+  <h2>Example Response</h2>
+  <pre>{
+  <span class="key">"success"</span>: <span class="bool">true</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"precinct"</span>: {
+      <span class="key">"name"</span>:       <span class="str">"Salt Lake City 11"</span>,
+      <span class="key">"precinctID"</span>: <span class="str">"SLC011"</span>,
+      <span class="key">"vistaID"</span>:    <span class="str">"SLC011"</span>,
+      <span class="key">"county"</span>:     <span class="str">"Salt Lake"</span>
+    },
+    <span class="key">"address"</span>: {
+      <span class="key">"input"</span>:    <span class="str">"350 N State St, Salt Lake City"</span>,
+      <span class="key">"matched"</span>:  <span class="str">"350 N STATE ST, SALT LAKE CITY"</span>,
+      <span class="key">"location"</span>: {
+        <span class="key">"lat"</span>: <span class="num">40.77657</span>,
+        <span class="key">"lng"</span>: <span class="num">-111.88836</span>
+      }
+    },
+    <span class="key">"geometry"</span>: {
+      <span class="key">"type"</span>: <span class="str">"Polygon"</span>,
+      <span class="key">"coordinates"</span>: <span class="dim">[ [ [...], [...], ... ] ]</span>
+    },
+    <span class="key">"html"</span>: <span class="str">"&lt;!DOCTYPE html&gt;...&lt;/html&gt;"</span>
+    <span class="dim">// Self-contained HTML page with Leaflet map, precinct boundary drawn,
+    // and address pin. Renderable directly in an iframe or browser tab.</span>
+  }
+}</pre>
+
+  <h2>Error Responses</h2>
+  <table>
+    <thead>
+      <tr><th>HTTP Status</th><th>Cause</th><th>Resolution</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>400</code></td>
+        <td>Missing <code>address</code> parameter</td>
+        <td>Include <code>?address=...</code> in the request</td>
+      </tr>
+      <tr>
+        <td><code>404</code></td>
+        <td>Address not geocoded, or no precinct found at that location</td>
+        <td>Try adding a ZIP code or full city name; confirm address is in Utah</td>
+      </tr>
+      <tr>
+        <td><code>500</code></td>
+        <td>Upstream service error (UGRC or ArcGIS)</td>
+        <td>Retry the request</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Rendering the HTML Map</h2>
+  <p>The <code>html</code> field in the response is a complete, self-contained HTML document.
+  You can render it in two ways:</p>
+
+  <h3>As an iframe (srcdoc)</h3>
+  <pre>&lt;iframe srcdoc="..." width="100%" height="500" frameborder="0"&gt;&lt;/iframe&gt;</pre>
+  <div class="note">
+    When injecting into <code>srcdoc</code>, HTML-encode the string first
+    (replace <code>&amp;</code> → <code>&amp;amp;</code>, <code>"</code> → <code>&amp;quot;</code>, etc.).
+  </div>
+
+  <h3>As a Blob URL (JavaScript)</h3>
+  <pre>const blob = new Blob([data.html], { type: 'text/html' });
+const url  = URL.createObjectURL(blob);
+iframe.src = url;</pre>
+
+  <h2>Tips for Accurate Results</h2>
+  <ul style="margin-left:20px; margin-bottom:16px; color:#334060; font-size:.9rem; line-height:2">
+    <li>Include a city name <em>or</em> ZIP code — the geocoder needs a zone to narrow the result</li>
+    <li>Street abbreviations (N, S, E, W, St, Ave, Blvd, Dr) are all accepted</li>
+    <li>City abbreviations like <strong>SLC</strong> are not resolved — use <em>Salt Lake City</em> or the ZIP</li>
+    <li>Apartment/unit numbers can be omitted</li>
+    <li>PO Boxes are not supported — use a physical street address</li>
+  </ul>
+
+  <h2 id="llm">For Automated Agents &amp; LLMs</h2>
+  <div class="llm-box">
+    <h3>🤖 Machine-Readable API Summary</h3>
+    <p>
+      This API takes a Utah mailing address as plain text and returns structured precinct data.
+      No API key or authentication header is required. All requests are <code>GET</code>.
+      The response is always <code>application/json</code>.
+    </p>
+
+    <h3>Canonical Endpoint</h3>
+    <pre><span class="url">https://utahdemprecinctmap.vercel.app/api/precinct?address={address}</span></pre>
+
+    <h3>Minimal Request (metadata only, no geometry/html)</h3>
+    <pre>GET /api/precinct?address=350+N+State+St+84114&amp;geometry=false&amp;html=false</pre>
+
+    <h3>Full Request (all data including renderable map)</h3>
+    <pre>GET /api/precinct?address=350+N+State+St,+Salt+Lake+City</pre>
+
+    <h3>Key fields to extract from response</h3>
+    <table>
+      <thead>
+        <tr><th>Field path</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>data.precinct.name</code></td><td>Human-readable precinct name</td></tr>
+        <tr><td><code>data.precinct.precinctID</code></td><td>Short precinct code (e.g. <code>SLC011</code>)</td></tr>
+        <tr><td><code>data.precinct.county</code></td><td>County name</td></tr>
+        <tr><td><code>data.address.location</code></td><td>Geocoded <code>{ lat, lng }</code></td></tr>
+        <tr><td><code>data.geometry</code></td><td>GeoJSON Polygon of precinct boundary</td></tr>
+        <tr><td><code>data.html</code></td><td>Self-contained HTML map page (Leaflet)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Failure detection</h3>
+    <p>Check <code>response.success === false</code> and read <code>response.error</code> for a plain-English message.
+    HTTP status will be <code>400</code>, <code>404</code>, or <code>500</code> on failure.</p>
+
+    <h3>Address formatting guidance for LLMs</h3>
+    <p>
+      When constructing the <code>address</code> parameter from user-provided data, prefer the format:<br/>
+      <code>{house number} {street}, {city}</code> — e.g. <code>123 Main St, Provo</code><br/>
+      or <code>{house number} {street} {zip}</code> — e.g. <code>123 Main St 84601</code>.<br/>
+      Always URL-encode the value. Spaces may be encoded as <code>+</code> or <code>%20</code>.
+    </p>
+  </div>
+
+  <h2>Data Sources</h2>
+  <p>
+    Precinct boundaries are sourced from the
+    <a href="https://gis.utah.gov/products/sgid/political/voter-precincts/" target="_blank">
+      Utah AGRC VistaBallotAreas layer
+    </a>
+    maintained by UGRC and the Utah Lieutenant Governor's Office.
+    Address geocoding is powered by the
+    <a href="https://api.mapserv.utah.gov" target="_blank">UGRC Web API</a>.
+    Boundaries are updated periodically following annexations and redistricting.
+  </p>
+
+</div>
+
+<footer>Utah Civic Compact Precinct Lookup · Data: Utah AGRC / SGID</footer>
+
+</body>
+</html>
