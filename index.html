@@ -1742,7 +1742,18 @@ document.getElementById('funnel-modal').addEventListener('click', function(e) {
   if (e.target === this) closeFunnel();
 });
 
-function buildHouseSidebar(dist, precinctCount) {
+// Incumbent + 2026 candidates block for the district panels (undefined = loading)
+function officialsSection(candHtml) {
+  return `<div class="info-section">
+      <div class="info-section-title">Current Officeholder &amp; 2026 Candidates</div>
+      ${candHtml === undefined ? '<span class="info-loading">Loading…</span>' : candHtml}
+    </div>`;
+}
+
+// Clicking another district while one is loading must not paint stale results
+let _districtPanelSeq = 0;
+
+function buildHouseSidebar(dist, precinctCount, candHtml) {
   const countVal = precinctCount === undefined
     ? '<span class="info-loading">Loading…</span>'
     : precinctCount === null
@@ -1750,6 +1761,7 @@ function buildHouseSidebar(dist, precinctCount) {
       : precinctCount;
   return `
     <span class="info-type-badge badge-house-bg">House District</span>
+    ${officialsSection(candHtml)}
     <div class="info-section">
       <div class="info-section-title">District Info</div>
       ${infoRow('District', dist)}
@@ -1765,9 +1777,10 @@ function buildHouseSidebar(dist, precinctCount) {
   `;
 }
 
-function buildSenateSidebar(dist) {
+function buildSenateSidebar(dist, candHtml) {
   return `
     <span class="info-type-badge badge-senate-bg">Senate District</span>
+    ${officialsSection(candHtml)}
     <div class="info-section">
       <div class="info-section-title">District Info</div>
       ${infoRow('District', dist)}
@@ -1841,17 +1854,25 @@ function attachHouseClick(layer) {
     const dist    = e.target.feature?.properties?.DIST;
     const feature = e.target.feature;
     if (dist == null) return;
-    showSidebar(`House District ${dist}`, buildHouseSidebar(dist, undefined)); // undefined = loading
-    const count = await getPrecinctCount(feature);
-    showSidebar(`House District ${dist}`, buildHouseSidebar(dist, count));    // null = failed, number = success
+    const seq = ++_districtPanelSeq;
+    let count, cands;   // undefined = still loading; each re-renders as it arrives
+    const render = () => { if (seq === _districtPanelSeq) showSidebar(`House District ${dist}`, buildHouseSidebar(dist, count, cands)); };
+    render();
+    loadCandidatesForDistricts({ house: dist }).then(h => { cands = h; render(); });
+    getPrecinctCount(feature).then(c => { count = c; render(); });   // null = failed
   });
 }
 
 function attachSenateClick(layer) {
-  layer.on('click', function(e) {
+  layer.on('click', async function(e) {
     L.DomEvent.stopPropagation(e);
     const dist = e.target.feature?.properties?.DIST;
-    if (dist != null) showSidebar(`Senate District ${dist}`, buildSenateSidebar(dist));
+    if (dist == null) return;
+    const seq = ++_districtPanelSeq;
+    showSidebar(`Senate District ${dist}`, buildSenateSidebar(dist, undefined));
+    const cands = await loadCandidatesForDistricts({ senate: dist });
+    if (seq !== _districtPanelSeq) return;
+    showSidebar(`Senate District ${dist}`, buildSenateSidebar(dist, cands));
   });
 }
 
