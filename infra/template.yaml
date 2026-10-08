@@ -117,19 +117,6 @@ Resources:
       Stage: PRODUCTION
       EnableAutoBuild: true
 
-  # utahciviccompact.org is already associated with the uccsite-admin app, so
-  # the subdomain itself is this app's domain. DNS lives in Cloudflare: add the
-  # CNAMEs Amplify reports (cert validation + lookup -> CloudFront) there.
-  LookupDomain:
-    Type: AWS::Amplify::Domain
-    Properties:
-      AppId: !GetAtt App.AppId
-      DomainName: lookup.utahciviccompact.org
-      EnableAutoSubDomain: false
-      SubDomainSettings:
-        - Prefix: ''
-          BranchName: !GetAtt MainBranch.BranchName
-
 Outputs:
   FunctionUrl:
     Value: !GetAtt ApiUrl.FunctionUrl

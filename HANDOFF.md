@@ -24,8 +24,13 @@ project stands, how it works, and what's left. Read this first._
   changing anything in `api/`, `lib/` or `lambda.js` — Amplify only rebuilds
   the static page.
 - **Logs:** CloudWatch `/aws/lambda/ucc-lookup-api` (30-day retention).
-- **Custom domain:** `lookup.utahciviccompact.org` (stack resource `LookupDomain`;
-  DNS CNAMEs live in Cloudflare, DNS-only/grey-cloud).
+- **Custom domain:** **https://lookup.utahciviccompact.org** — a Cloudflare
+  Workers custom domain (`cloudflare/worker.js`, Worker `ucc-lookup-domain`,
+  deploy with `cd cloudflare && npx wrangler deploy`) that passes every
+  request through to the Amplify URL. Chosen because the domain's DNS is in
+  Cloudflare and wrangler's login can create Worker custom domains (DNS +
+  cert automatic) but cannot edit DNS records. Hosting is still AWS. When DNS
+  moves to Route 53, attach the domain in Amplify instead and delete the Worker.
 - **Not done yet:** retiring
   the Vercel `ucc-lookup` project once the AWS URL is the one shared.
 
