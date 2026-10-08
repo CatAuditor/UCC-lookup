@@ -12,6 +12,7 @@ const config = require('../lib/config');
 const { ugrcGeocode } = require('../lib/geo');
 
 module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');   // addresses are personal; don't cache at the edge
   if (req.method !== 'GET') return res.status(405).json({ status: 405, message: 'Method not allowed' });
 

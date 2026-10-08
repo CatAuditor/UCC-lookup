@@ -1,8 +1,9 @@
 const fs = require('fs');
 
-// The page no longer embeds the UGRC key (see api/geocode.js), but the
-// server needs it, so fail the deploy early if it's missing.
-const required = ['UGRC_API_KEY'];
+// The page no longer embeds the UGRC key (see api/geocode.js). On Vercel the
+// API runs in the same deploy, so fail early if its key is missing; on AWS
+// (STATIC_ONLY=1, Amplify) the API is a separate Lambda and needs nothing here.
+const required = process.env.STATIC_ONLY ? [] : ['UGRC_API_KEY'];
 const missing  = required.filter(k => !process.env[k]);
 if (missing.length) {
   console.error(`Error: missing required env vars: ${missing.join(', ')}`);
@@ -16,6 +17,7 @@ const replacements = {
   '%%HOUSE_SVC_PATH%%':    process.env.HOUSE_SVC_PATH    || 'UtahHouseDistricts2022to2032/FeatureServer/0/query',
   '%%SENATE_SVC_PATH%%':   process.env.SENATE_SVC_PATH   || 'UtahSenateDistricts2022to2032/FeatureServer/0/query',
   '%%MUNI_SVC_PATH%%':     process.env.MUNI_SVC_PATH     || 'UtahMunicipalBoundaries/FeatureServer/0/query',
+  '%%API_BASE%%':          process.env.API_BASE            || '',
   '%%CLIENT_NAME%%':         process.env.CLIENT_NAME         || 'Utah Civic Compact',
   '%%CLIENT_STATE%%':        process.env.CLIENT_STATE        || 'Utah',
   '%%CLIENT_GEO_VIEWBOX%%':  process.env.CLIENT_GEO_VIEWBOX  || '-114.05,36.99,-109.04,42.00',

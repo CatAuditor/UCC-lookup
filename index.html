@@ -766,6 +766,8 @@
 <script>
 // ── Config (injected at build time from environment variables) ────────────────
 const CLIENT_NAME  = '%%CLIENT_NAME%%';
+// '' = same origin (/api/... on Vercel, or Amplify rewrite); else e.g. a Lambda Function URL
+const API_BASE     = '%%API_BASE%%'.replace(/\/+$/, '');
 
 const ARCGIS           = '%%ARCGIS_BASE%%';
 const PRECINCT_SVC     = `${ARCGIS}/%%PRECINCT_SVC_PATH%%`;
@@ -1160,7 +1162,7 @@ async function findPrecinct() {
 
   try {
     // 1. Geocode (server-side proxy keeps the UGRC key off the page)
-    const geoRes  = await fetch(`/api/geocode?address=${encodeURIComponent(raw)}`);
+    const geoRes  = await fetch(`${API_BASE}/api/geocode?address=${encodeURIComponent(raw)}`);
     const geoJson = await geoRes.json();
     if (geoJson.status !== 200 || !geoJson.result) {
       throw new Error(geoJson.message || 'Address not found. Try adding your city or ZIP code.');
@@ -1502,7 +1504,7 @@ async function loadCandidatesForDistricts(districtInfo) {
   if (!params.toString()) return '';
 
   try {
-    const res  = await fetch(`/api/candidates?${params}`);
+    const res  = await fetch(`${API_BASE}/api/candidates?${params}`);
     const data = await res.json();
     if (!data.candidates?.length) return '<span style="color:#9CA3AF;font-size:.8rem">No officials on file yet for this area.</span>';
 
@@ -1587,7 +1589,7 @@ function buildVolunteerSection(props, districtInfo) {
 function loadFunnelConfig() {
   if (_funnelConfig) return Promise.resolve(_funnelConfig);
   if (!_funnelConfigPromise) {
-    _funnelConfigPromise = fetch('/api/config')
+    _funnelConfigPromise = fetch(`${API_BASE}/api/config`)
       .then(r => r.json())
       .then(d => (_funnelConfig = { capacity: d.capacity || [] }))
       .catch(() => (_funnelConfig = { capacity: [] }));
@@ -1672,7 +1674,7 @@ async function submitFunnel() {
   const str   = v => (v != null && v !== '' ? String(v) : null);
 
   try {
-    const res = await fetch('/api/volunteer', {
+    const res = await fetch(`${API_BASE}/api/volunteer`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({

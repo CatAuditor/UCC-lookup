@@ -17,3 +17,5 @@ node_modules/
 
 # Private business material
 pitch/
+lambda-bundle/
+infra/packaged.yaml

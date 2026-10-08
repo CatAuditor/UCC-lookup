@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: UCC officials lookup - API Lambda (Function URL) + Amplify Hosting for the static page
+
+Parameters:
+  SheetId:
+    Type: String
+    Description: Google Sheet holding Candidates, Config and Submissions tabs
+  UgrcReferer:
+    Type: String
+    Default: https://precinctlookuptool.vercel.app/
+    Description: Referer sent to UGRC; must match the API key's allowed-referrer pattern
+  GitHubToken:
+    Type: String
+    NoEcho: true
+    Description: GitHub token Amplify uses to read the repo and add its webhook
+  RepoUrl:
+    Type: String
+    Default: https://github.com/CatAuditor/UCC-lookup
+
+Resources:
+  # Secret values are set out of band (aws secretsmanager put-secret-value),
+  # never in this template: UGRC_API_KEY, GOOGLE_SERVICE_ACCOUNT_EMAIL,
+  # GOOGLE_SERVICE_ACCOUNT_KEY
+  ApiSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: ucc-lookup/api
+      Description: UCC lookup API keys - UGRC geocoder and Google service account
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/ucc-lookup-api
+      RetentionInDays: 30
+
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ucc-lookup-api
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt ApiLogGroup.Arn
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref ApiSecret
+
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: ApiLogGroup
+    Properties:
+      FunctionName: ucc-lookup-api
+      Description: UCC lookup /api/* (geocode, candidates, config, volunteer, precinct)
+      Runtime: nodejs22.x
+      Handler: lambda.handler
+      Code: ../lambda-bundle
+      MemorySize: 256
+      Timeout: 15
+      Role: !GetAtt ApiRole.Arn
+      Environment:
+        Variables:
+          SECRET_ID: !Ref ApiSecret
+          CANDIDATE_SHEET_ID: !Ref SheetId
+          VOLUNTEER_SHEET_ID: !Ref SheetId
+          UGRC_REFERER: !Ref UgrcReferer
+          CLIENT_TIMEZONE: America/Denver
+
+  ApiUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !Ref ApiFunction
+      AuthType: NONE
+
+  ApiUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  ApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunction
+      Principal: '*'
+      InvokedViaFunctionUrl: true
+
+  App:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: ucc-lookup
+      Description: UCC officials and candidates lookup - static page
+      Repository: !Ref RepoUrl
+      AccessToken: !Ref GitHubToken
+      Platform: WEB
+      CustomRules:
+        - Source: /api/<*>
+          Target: !Sub '${ApiUrl.FunctionUrl}api/<*>'
+          Status: '200'
+
+  MainBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      AppId: !GetAtt App.AppId
+      BranchName: main
+      Stage: PRODUCTION
+      EnableAutoBuild: true
+
+Outputs:
+  FunctionUrl:
+    Value: !GetAtt ApiUrl.FunctionUrl
+  AppId:
+    Value: !GetAtt App.AppId
+  SiteUrl:
+    Value: !Sub 'https://main.${App.DefaultDomain}'
+  SecretArn:
+    Value: !Ref ApiSecret
