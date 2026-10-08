@@ -1053,36 +1053,56 @@ function closeSuggestions() {
   currentItems = [];
 }
 
-function renderSuggestions(items) {
+function renderSuggestions(items, typed) {
   suggestBox.innerHTML = '';
   activeIndex = -1;
-  if (!items.length) {
-    suggestBox.innerHTML = '<div class="suggestion-empty">No Utah addresses found</div>';
-    suggestBox.classList.add('open');
-    return;
-  }
-  currentItems = items;
-  items.forEach((item, i) => {
+  // Always offer "search exactly what I typed" first — OpenStreetMap is weak on
+  // Utah grid addresses (1234 E 4500 S) and the state geocoder handles them.
+  currentItems = [{ typed: true }, ...items];
+  currentItems.forEach((item, i) => {
     const div = document.createElement('div');
     div.className = 'suggestion-item';
     div.setAttribute('role', 'option');
-    const a = item.address || {};
-    const primary   = [a.house_number, a.road].filter(Boolean).join(' ') || item.display_name.split(',')[0];
-    const secondary = [a.city || a.town || a.village || a.county, a.postcode].filter(Boolean).join(', ');
-    div.innerHTML = `<div>${primary}</div>${secondary ? `<div class="sub">${secondary}</div>` : ''}`;
+    if (item.typed) {
+      div.innerHTML = `<div>Search “${escHtml(typed)}”</div><div class="sub">Exactly as typed</div>`;
+    } else {
+      const a = item.address || {};
+      const primary   = [a.house_number, a.road].filter(Boolean).join(' ') || item.display_name.split(',')[0];
+      const secondary = [a.city || a.town || a.village || a.county, a.postcode].filter(Boolean).join(', ');
+      div.innerHTML = `<div>${escHtml(primary)}</div>${secondary ? `<div class="sub">${escHtml(secondary)}</div>` : ''}`;
+    }
     div.addEventListener('mousedown', e => { e.preventDefault(); selectSuggestion(i); });
     suggestBox.appendChild(div);
   });
   suggestBox.classList.add('open');
 }
 
+// Drop suggestions for a different street: every number the person typed
+// after the house number (the "200" in "86 S 200 E") must appear in the
+// suggestion's street name.
+function matchesTyped(item, typed) {
+  const nums = (typed.match(/\d+/g) || []).slice(1);
+  const road = String(item.address?.road || item.display_name || '');
+  return nums.every(n => new RegExp(`\\b${n}\\b`).test(road));
+}
+
+// Coordinates of the picked suggestion — used only if the state geocoder
+// can't place the address text (new subdivisions, rural routes).
+let _pickedCoords = null;
+
 function selectSuggestion(i) {
   const item = currentItems[i];
   if (!item) return;
+  if (item.typed) { _pickedCoords = null; closeSuggestions(); findPrecinct(); return; }
   const a = item.address || {};
-  const primary   = [a.house_number, a.road].filter(Boolean).join(' ') || item.display_name.split(',')[0];
-  const secondary = a.city || a.town || a.village || a.postcode || '';
-  input.value = secondary ? `${primary}, ${secondary}` : primary;
+  // OpenStreetMap often knows the street but not the house number — keep the
+  // number the person typed rather than dropping it.
+  const typedNum = (input.value.trim().match(/^(\d+[a-z]?)\s/i) || [])[1];
+  const num      = a.house_number || typedNum;
+  const primary  = [num, a.road].filter(Boolean).join(' ') || item.display_name.split(',')[0];
+  const place    = a.city || a.town || a.village || a.hamlet || '';
+  input.value = [primary, [place, a.postcode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  _pickedCoords = { lat: +item.lat, lng: +item.lon, value: input.value, exact: !!a.house_number };
   closeSuggestions();
   findPrecinct();
 }
@@ -1106,8 +1126,8 @@ async function fetchSuggestions(query) {
     const res  = await fetch(url, { headers: { 'Accept-Language': 'en-US,en' } });
     const data = await res.json();
     if (suggestQuery !== query) return;   // closed or superseded while loading
-    const filtered = data.filter(d => d.address && d.address.road);
-    renderSuggestions(filtered.length ? filtered : data.slice(0, 6));
+    const withRoad = data.filter(d => d.address && d.address.road);
+    renderSuggestions((withRoad.length ? withRoad : data).filter(d => matchesTyped(d, query)).slice(0, 5), query);
   } catch { closeSuggestions(); }
 }
 
@@ -1164,12 +1184,17 @@ async function findPrecinct() {
     // 1. Geocode (server-side proxy keeps the UGRC key off the page)
     const geoRes  = await fetch(`${API_BASE}/api/geocode?address=${encodeURIComponent(raw)}`);
     const geoJson = await geoRes.json();
-    if (geoJson.status !== 200 || !geoJson.result) {
-      throw new Error(geoJson.message || 'Address not found. Try adding your city or ZIP code.');
+    let lng, lat;
+    if (geoJson.status === 200 && geoJson.result) {
+      ({ x: lng, y: lat } = geoJson.result.location);
+    } else if (_pickedCoords && _pickedCoords.value === raw) {
+      ({ lng, lat } = _pickedCoords);   // fall back to the suggestion's own location
+    } else {
+      throw new Error(geoJson.message && !/score of/.test(geoJson.message)
+        ? geoJson.message
+        : 'We couldn\'t find that address. Try the format "123 Main St, City" or pick a suggestion from the list.');
     }
-
-    const { x: lng, y: lat } = geoJson.result.location;
-    const matchedAddress      = geoJson.result.inputAddress || raw;
+    const matchedAddress      = geoJson.result?.inputAddress || raw;
 
     // 2. Query precinct + house + senate + city in parallel
     const pointParams = (outFields) => new URLSearchParams({
