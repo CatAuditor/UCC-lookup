@@ -31,7 +31,7 @@ project stands, how it works, and what's left. Read this first._
   Cloudflare and wrangler's login can create Worker custom domains (DNS +
   cert automatic) but cannot edit DNS records. Hosting is still AWS. When DNS
   moves to Route 53, attach the domain in Amplify instead and delete the Worker.
-- **Not done yet:** retiring
+- **Retired 2026-10-08:** Vercel projects `ucc-lookup` and `precinctlookuptool` removed; old repo `CatAuditor/precinctlookuptool` made private + archived. (Old note: retiring
   the Vercel `ucc-lookup` project once the AWS URL is the one shared.
 
 ## 0. 2026-10-06 — UCC lean rebuild (now repo `CatAuditor/UCC-lookup`)
