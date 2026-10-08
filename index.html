@@ -1615,9 +1615,10 @@ function loadFunnelConfig() {
   if (_funnelConfig) return Promise.resolve(_funnelConfig);
   if (!_funnelConfigPromise) {
     _funnelConfigPromise = fetch(`${API_BASE}/api/config`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => (_funnelConfig = { capacity: d.capacity || [] }))
-      .catch(() => (_funnelConfig = { capacity: [] }));
+      // Don't remember a failure — the next time the form opens, try again
+      .catch(() => { _funnelConfigPromise = null; return { capacity: [] }; });
   }
   return _funnelConfigPromise;
 }
@@ -1626,9 +1627,12 @@ function openFunnel() {
   _funnelSelection.capacity = [];
   document.getElementById('funnel-modal').classList.add('open');
   renderFunnelForm();
-  loadFunnelConfig().then(() => {
-    const grid = document.getElementById('fn-capacity');
-    if (grid) grid.innerHTML = chipList('capacity', _funnelConfig.capacity);
+  loadFunnelConfig().then(cfg => {
+    const grid  = document.getElementById('fn-capacity');
+    const field = document.getElementById('fn-capacity-field');
+    if (!grid) return;
+    grid.innerHTML = chipList('capacity', cfg.capacity);
+    if (field) field.style.display = cfg.capacity.length ? '' : 'none';   // nothing to pick → no empty heading
   });
 }
 
@@ -1669,7 +1673,7 @@ function renderFunnelForm() {
     <div class="funnel-field"><label for="fn-email">Email *</label><input type="email" id="fn-email" autocomplete="email" /></div>
     <div class="funnel-field"><label for="fn-phone">Phone</label><input type="tel" id="fn-phone" autocomplete="tel" /></div>
     ${d ? '' : `<div class="funnel-field"><label for="fn-addr">Home Address *</label><input type="text" id="fn-addr" autocomplete="street-address" value="${escHtml(addrVal)}" placeholder="Street, city — finds your House &amp; Senate district" /></div>`}
-    <div class="funnel-field"><label>How can you help? <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
+    <div class="funnel-field" id="fn-capacity-field"${_funnelConfig && !_funnelConfig.capacity.length ? ' style="display:none"' : ''}><label>How can you help? <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
       <div class="chip-grid" id="fn-capacity">${chipList('capacity', _funnelConfig?.capacity)}</div></div>
     <label class="funnel-check"><input type="checkbox" id="fn-news" /> <span>Send me the ${escHtml(CLIENT_NAME)} newsletter</span></label>
     <div class="funnel-actions">

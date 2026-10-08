@@ -31,8 +31,7 @@ if (fs.existsSync(envPath)) {
 const { getAccessToken } = require('../lib/sheets');
 const SHEETS_API = 'https://sheets.googleapis.com/v4/spreadsheets';
 
-const CAPACITY = ['Knock on doors', 'Make phone calls', 'Write postcards', 'Host an event',
-  'Share on social media', 'Register voters', 'Attend a city/county meeting'];
+const CAPACITY = ['Organize a town hall about ALPR', 'Social Media', 'Investigations', 'Host a fundraiser'];
 const SUBMISSIONS_HEADER = ['Created', 'FirstName', 'LastName', 'Email', 'Phone', 'House', 'Senate',
   'County', 'City', 'Precinct', 'Capacity', 'Address', 'Newsletter', 'Status', 'DateContacted',
   'Notes', 'SourceURL'];
