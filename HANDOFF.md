@@ -3,6 +3,30 @@
 _Last updated: 2026-10-07. This is the single source of truth for where the
 project stands, how it works, and what's left. Read this first._
 
+## AWS hosting (2026-10-08) — primary
+
+- **Site:** https://main.d3m4sng8iepwnz.amplifyapp.com (Amplify app
+  `ucc-lookup`, id `d3m4sng8iepwnz`, us-west-2, account 017110365763). Builds
+  from GitHub `main` on every push (`amplify.yml`: static page only).
+- **API:** Lambda `ucc-lookup-api` behind a Function URL
+  (https://ir7w6leqnw76oy7uf27koydwt40unagw.lambda-url.us-west-2.on.aws/).
+  `lambda.js` adapts Function URL events to the same `api/*.js` handlers
+  Vercel runs. Amplify rewrite `/api/<*>` → Function URL (200 proxy; POST
+  bodies pass through — verified with a volunteer signup).
+- **Secrets:** Secrets Manager `ucc-lookup/api` (JSON: `UGRC_API_KEY`,
+  `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_KEY`), loaded by
+  `lambda.js` on cold start. Sheet IDs / `UGRC_REFERER` are plain Lambda env.
+  Rotate the Google key by `put-secret-value` — no redeploy needed beyond a
+  cold start.
+- **Infra as code:** `infra/template.yaml` (CloudFormation stack
+  `ucc-lookup`), deployed with `infra/deploy.sh <sheet-id>` (profile
+  `uccsite`; needs `gh` logged in for Amplify's GitHub token). Re-run it after
+  changing anything in `api/`, `lib/` or `lambda.js` — Amplify only rebuilds
+  the static page.
+- **Logs:** CloudWatch `/aws/lambda/ucc-lookup-api` (30-day retention).
+- **Not done yet:** custom domain (Amplify → Domain management), and retiring
+  the Vercel `ucc-lookup` project once the AWS URL is the one shared.
+
 ## 0. 2026-10-06 — UCC lean rebuild (now repo `CatAuditor/UCC-lookup`)
 
 Scope cut to what the Utah Civic Compact needs: **Utah House, Utah Senate,
