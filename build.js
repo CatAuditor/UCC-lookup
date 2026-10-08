@@ -18,6 +18,7 @@ const replacements = {
   '%%SENATE_SVC_PATH%%':   process.env.SENATE_SVC_PATH   || 'UtahSenateDistricts2022to2032/FeatureServer/0/query',
   '%%MUNI_SVC_PATH%%':     process.env.MUNI_SVC_PATH     || 'UtahMunicipalBoundaries/FeatureServer/0/query',
   '%%API_BASE%%':          process.env.API_BASE            || '',
+  '%%SUBSCRIBE_URL%%':     process.env.SUBSCRIBE_URL       ?? 'https://utahciviccompact.org/api/subscribe',
   '%%CLIENT_NAME%%':         process.env.CLIENT_NAME         || 'Utah Civic Compact',
   '%%CLIENT_STATE%%':        process.env.CLIENT_STATE        || 'Utah',
   '%%CLIENT_GEO_VIEWBOX%%':  process.env.CLIENT_GEO_VIEWBOX  || '-114.05,36.99,-109.04,42.00',

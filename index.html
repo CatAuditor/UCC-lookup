@@ -768,6 +768,8 @@
 const CLIENT_NAME  = '%%CLIENT_NAME%%';
 // '' = same origin (/api/... on Vercel, or Amplify rewrite); else e.g. a Lambda Function URL
 const API_BASE     = '%%API_BASE%%'.replace(/\/+$/, '');
+// UCC mailing list (main site's join endpoint; double opt-in welcome email)
+const SUBSCRIBE_URL = '%%SUBSCRIBE_URL%%';
 
 const ARCGIS           = '%%ARCGIS_BASE%%';
 const PRECINCT_SVC     = `${ARCGIS}/%%PRECINCT_SVC_PATH%%`;
@@ -1724,11 +1726,26 @@ async function submitFunnel() {
       }),
     });
     const data = await res.json();
+    if (res.ok && news) joinMailingList({ email, firstName: first, lastName: last, address: addr });
     if (res.ok) renderFunnelSuccess();
     else fail(data.error || 'Something went wrong. Please try again.');
   } catch {
     fail('Network error. Please try again.');
   }
+}
+
+// Newsletter opt-in → the UCC mailing list on utahciviccompact.org, the same
+// endpoint as the site's join form (sends the confirm-your-email welcome).
+// Fire-and-forget: the signup is already saved to the sheet with
+// Newsletter=TRUE, so a failure here never blocks the volunteer.
+function joinMailingList({ email, firstName, lastName, address }) {
+  if (!SUBSCRIBE_URL) return;
+  const zip = (String(address || '').match(/\b8[45]\d{3}\b/) || [])[0] || '';
+  fetch(SUBSCRIBE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, firstName, lastName: lastName || '', address: address || '', zip }),
+  }).catch(() => {});
 }
 
 function renderFunnelSuccess() {
