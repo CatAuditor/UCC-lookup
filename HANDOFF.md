@@ -24,7 +24,9 @@ project stands, how it works, and what's left. Read this first._
   changing anything in `api/`, `lib/` or `lambda.js` — Amplify only rebuilds
   the static page.
 - **Logs:** CloudWatch `/aws/lambda/ucc-lookup-api` (30-day retention).
-- **Not done yet:** custom domain (Amplify → Domain management), and retiring
+- **Custom domain:** `lookup.utahciviccompact.org` (stack resource `LookupDomain`;
+  DNS CNAMEs live in Cloudflare, DNS-only/grey-cloud).
+- **Not done yet:** retiring
   the Vercel `ucc-lookup` project once the AWS URL is the one shared.
 
 ## 0. 2026-10-06 — UCC lean rebuild (now repo `CatAuditor/UCC-lookup`)
